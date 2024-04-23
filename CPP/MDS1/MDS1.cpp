@@ -6,23 +6,52 @@ using json = nlohmann::json;
 
 namespace MDS1 {
 
-// Function to process the input JSON and return a response JSON
 json process(const std::string& jsonData) {
-    // Parse the JSON data
-    auto received_data = json::parse(jsonData);
-    
+    try {
+        // Parse the JSON data
+        auto received_data = json::parse(jsonData);
+        
+        // Check if the required keys are present and are of the expected type
+        if (!received_data.contains("target") || !received_data["target"].is_object()) {
+            throw std::runtime_error("Missing or invalid 'target' in JSON");
+        }
+        if (!received_data.contains("molecules") || !received_data["molecules"].is_object()) {
+            throw std::runtime_error("Missing or invalid 'molecules' in JSON");
+        }
 
-    // Target goes here
+        // Retrieve the "target" key containing a dict object
+        json target = received_data["target"];
 
-    // Molecule goes here
+        // Save the target object
+        std::string targetString = target.dump();
 
+        // Molecule goes here
+        json molecule = received_data["molecules"];
 
+        // Save the molecule object
+        std::string moleculeString = molecule.dump();
 
-    // For demonstration, let's just prepare a response json
-    json response = {{"message", "Data (BLOOOOOOOOOO) received successfully"}};
+        // Prepare a response json
+        json response = {{"target", targetString}, {"molecules", moleculeString}, {"result", "Success"}};
 
-    // Return the response JSON object
-    return response;
+        // Return the response JSON object
+        return response;
+    } catch (json::parse_error& e) {
+        // Handle JSON parsing errors (e.g., invalid JSON)
+        std::cerr << "JSON Parsing Error: " << e.what() << '\n';
+    } catch (json::type_error& e) {
+        // Handle JSON type errors (e.g., accessing a key that doesn't exist or is of an unexpected type)
+        std::cerr << "JSON Type Error: " << e.what() << '\n';
+    } catch (std::exception& e) {
+        // Handle any other std::exception derived errors
+        std::cerr << "Error: " << e.what() << '\n';
+    } catch (...) {
+        // Handle any other errors
+        std::cerr << "An unknown error occurred\n";
+    }
+
+    // Return an error response if any exception is caught
+    return json{{"error", "An error occurred during processing"}};
 }
 
-} // namespace MDS
+} // namespace MDS1

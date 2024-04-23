@@ -4,11 +4,14 @@ import os
 import subprocess
 import time
 
-DEV = True
+RECOMPILE = True
+AUTO_RUN = False
 
 def send_and_receive_data(host, port, data):
     # Serialize the data to JSON format
     json_data = json.dumps(data)
+
+    print(json_data)
 
     # Create a socket object
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,66 +33,36 @@ def send_and_receive_data(host, port, data):
 
     return response
 
-def spin_and_send(molecule_json):
+def spin(molecule_json):
     # Define the host and the port
     host = 'localhost'
     port = 12345
 
     # Compile (dev only)
-    if DEV:
+    if RECOMPILE:
         os.system("g++ -o ./CPP/compiled_cpp/cpp_tower ./CPP/cpp_tower.cpp")
 
-    # Spin up the shit
-    process = subprocess.Popen(["./CPP/compiled_cpp/cpp_tower"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    if AUTO_RUN:
+        # Spin up the shit
+        process = subprocess.Popen(["./CPP/compiled_cpp/cpp_tower"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    while True:
-        # Read the next line of output
-        output = process.stdout.readline().decode()
+        while True:
+            # Read the next line of output
+            output = process.stdout.readline().decode()
 
-        # If the output is 'alive\n', break the loop
-        if output == 'alive\n':
-            break
+            # If the output is 'alive\n', break the loop
+            if output == 'alive\n':
+                break
 
-        # If there is no more output and the process has finished, break the loop
-        if output == '' and process.poll() is not None:
-            break
+            # If there is no more output and the process has finished, break the loop
+            if output == '' and process.poll() is not None:
+                break
 
-        # Sleep for a short time to prevent this loop from using too much CPU
-        time.sleep(0.1)
+            # Sleep for a short time to prevent this loop from using too much CPU
+            time.sleep(0.1)
 
     reponse = send_and_receive_data(host, port, molecule_json)
 
     r = json.loads(reponse)
 
     return r
-
-
-if __name__ == "__main__":
-
-    target_model = lambda id: {
-        "id": id,
-        "dynamic": "false",
-        "point_cloud": "here_goes_a_serialized_numpy_array_with_atom_types_and_atom_cords",
-        "molecule_graph": "here_goes_a_cso_graph_or_something",
-    }
-
-    molecule_model = lambda id: {
-        "id": id,
-        "dynamic": "true",
-        "point_cloud": "here_goes_a_serialized_numpy_array_with_atom_types_and_atom_cords",
-        "molecule_graph": "here_goes_a_cso_graph_or_something",
-    }
-
-    # Define the data you want to send
-    data = {
-        "target": target_model("4646"),
-        "molecules": [
-            molecule_model("7474"),
-            molecule_model("2828")
-        ]
-    }
-
-    # Send the data and wait for the response
-    r = spin_and_send(data)
-
-    print(r)
