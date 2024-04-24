@@ -103,11 +103,11 @@ void renderScene() {
         float distance = sqrt(pow(p.x - cam.x, 2) + pow(p.y - cam.y, 2) + pow(p.z - cam.z, 2));
         
         // Adjust point size based on distance and perspective
-        // The multiplier '1000.0f' is arbitrary; adjust as needed for your visual needs
-        float pointSize = 1000.0f / (distance * tan(fovRadians / 2) * aspectRatio);
+        // The multiplier '5.0f' is arbitrary; adjust as needed for your visual needs
+        float pointSize = 5.0f / (distance * tan(fovRadians / 2) * aspectRatio);
         pointSize = std::max(0.125f, std::min(pointSize, 2048.0f)); // Clamping to the valid OpenGL range
         
-        glPointSize(5.0f);
+        glPointSize(pointSize);
         
         glVertex3f(p.x, p.y, p.z);
     }
