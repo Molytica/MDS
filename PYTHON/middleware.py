@@ -146,7 +146,7 @@ def get_protein_data(uniprot_id):
     for amino_idx in amino_acid_atom_index_dict.keys():
         amino_acid_ref = amino_acid_edge_list[amino_acid_type_dict[amino_idx]]
 
-        if amino_idx > 1:
+        if amino_idx > list(amino_acid_atom_index_dict.keys())[0]:
             # Add edges between amino acids
             protein_edge_list.append((amino_acid_atom_index_dict[amino_idx - 1][2], amino_acid_atom_index_dict[amino_idx][0], 1))
 
@@ -400,7 +400,79 @@ TYR:
 """
 
 
-def plot_structure(atom_coords, atom_symbols, edge_list, amino_acid_type_belongings, title):
+def plot_structure_electronegativity(atom_coords, atom_symbols, edge_list, amino_acid_type_belongings, title):
+    x, y, z = zip(*atom_coords)  # Unpack the coordinates
+    text_labels = [f'{symbol} {i} ({aa})' for i, (symbol, aa) in enumerate(zip(atom_symbols, amino_acid_type_belongings))]  # Include amino acid type in label
+
+    # Electronegativity values for different atoms
+    electronegativities = {
+        "C": 2.55,
+        "N": 3.04,
+        "O": 3.44,
+        "S": 2.58,
+        "P": 2.19,
+    }
+
+    # Define a color scale based on electronegativity values
+    # Assume the minimum and maximum electronegativity values are known (from your dictionary)
+    min_electroneg = min(electronegativities.values())
+    max_electroneg = max(electronegativities.values())
+
+    # Create a function to interpolate between colors based on electronegativity
+    def get_color(electroneg):
+        # Normalize the electronegativity value between 0 and 1
+        normalized = (electroneg - min_electroneg) / (max_electroneg - min_electroneg)
+        return f'rgb({255 * (1 - normalized)}, {255 * normalized}, 150)'  # Example RGB color
+
+    # Map atom symbols to colors based on their electronegativity
+    colors = [get_color(electronegativities.get(symbol, min_electroneg)) for symbol in atom_symbols]
+
+    # Create scatter plot for atoms
+    atom_trace = go.Scatter3d(
+        x=x, y=y, z=z,
+        mode='markers+text',
+        text=text_labels,
+        marker=dict(size=5, color=colors),
+        name='Atoms'
+    )
+
+    # Create line plot for bonds
+    bond_traces = []
+    for start, end, bond_type in edge_list:
+        # Assign colors based on bond type
+        if bond_type == 1:
+            color = 'green'  # Single bond
+        elif bond_type == 1.5:
+            color = 'red'  # Aromatic bond
+        elif bond_type == 2:
+            color = 'blue'  # Double bond
+        else:
+            color = 'grey'  # Default for any other unspecified bond type
+
+        bond_trace = go.Scatter3d(
+            x=[atom_coords[start][0], atom_coords[end][0]],
+            y=[atom_coords[start][1], atom_coords[end][1]],
+            z=[atom_coords[start][2], atom_coords[end][2]],
+            mode='lines',
+            line=dict(color=color, width=2),
+            name=f'Bond {bond_type}'
+        )
+        bond_traces.append(bond_trace)
+
+    # Combine atom and bond traces
+    fig = go.Figure(data=[atom_trace, *bond_traces])
+    fig.update_layout(
+        title=title,
+        scene=dict(
+            xaxis_title='X',
+            yaxis_title='Y',
+            zaxis_title='Z'
+        ),
+        legend_title_text='Element'
+    )
+    fig.show()
+
+def plot_structure_standard(atom_coords, atom_symbols, edge_list, amino_acid_type_belongings, title):
     x, y, z = zip(*atom_coords)  # Unpack the coordinates
     text_labels = [f'{symbol} {i} ({aa})' for i, (symbol, aa) in enumerate(zip(atom_symbols, amino_acid_type_belongings))]  # Include amino acid type in label
 
@@ -463,6 +535,7 @@ if __name__ == "__main__":
     uniprots = sorted(list(af_uniprots))
 
     for uniprot_id in tqdm(uniprots):
+        uniprot_id = "P02768"
         protein_data = get_protein_data(uniprot_id)
 
         atom_coords = protein_data["atom_coords"]
@@ -471,7 +544,8 @@ if __name__ == "__main__":
         amino_acid_type_belongings = protein_data["amino_acid_type_belongings"]
 
         # Plot the protein structure
-        plot_structure(atom_coords, atom_symbols, edge_list, amino_acid_type_belongings, f"Protein Structure for {uniprot_id}")
+        plot_structure_standard(atom_coords, atom_symbols, edge_list, amino_acid_type_belongings, f"Protein Structure for {uniprot_id}")
+        plot_structure_electronegativity(atom_coords, atom_symbols, edge_list, amino_acid_type_belongings, f"Protein Structure for {uniprot_id}")
         print(uniprot_id)
         # Show only once
         break
