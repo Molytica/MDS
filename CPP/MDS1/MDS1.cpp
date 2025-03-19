@@ -7,6 +7,8 @@ using json = nlohmann::json;
 namespace MDS1 {
 
 json process(const std::string& jsonData) {
+    std::string error_msg = "An error occurred during processing";
+
     try {
         // Parse the JSON data
         auto received_data = json::parse(jsonData);
@@ -39,19 +41,23 @@ json process(const std::string& jsonData) {
     } catch (json::parse_error& e) {
         // Handle JSON parsing errors (e.g., invalid JSON)
         std::cerr << "JSON Parsing Error: " << e.what() << '\n';
+        error_msg = "Invalid JSON data 1";
     } catch (json::type_error& e) {
         // Handle JSON type errors (e.g., accessing a key that doesn't exist or is of an unexpected type)
         std::cerr << "JSON Type Error: " << e.what() << '\n';
+        error_msg = "Invalid JSON data 2";
     } catch (std::exception& e) {
         // Handle any other std::exception derived errors
         std::cerr << "Error: " << e.what() << '\n';
+        error_msg = e.what();
     } catch (...) {
         // Handle any other errors
         std::cerr << "An unknown error occurred\n";
+        error_msg = "An unknown error occurred";
     }
 
     // Return an error response if any exception is caught
-    return json{{"error", "An error occurred during processing"}};
+    return json{{"error", "An error occurred during processing: " + error_msg}};
 }
 
 } // namespace MDS1

@@ -5,7 +5,7 @@ import subprocess
 import time
 
 RECOMPILE = True
-AUTO_RUN = False
+AUTO_RUN = True
 
 def send_and_receive_data(host, port, data):
     # Serialize the data to JSON format
@@ -40,7 +40,7 @@ def spin(molecule_json):
 
     # Compile (dev only)
     if RECOMPILE:
-        os.system("g++ -o ./CPP/compiled_cpp/cpp_tower ./CPP/cpp_tower.cpp")
+        os.system("g++ -o ./CPP/compiled_cpp/cpp_tower ./CPP/cpp_tower.cpp -lGL -lGLU -lglut")
 
     if AUTO_RUN:
         # Spin up the shit

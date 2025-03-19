@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     # Define the data you want to send
     data = {
-        "target": target_model("4646"),
+        "target": m.get_protein_data("P51659", path="PYTHON/"),
         "molecules": [
             m.get_molecule_data(smiles="CCO"),
             m.get_molecule_data(smiles="C1=CC=CC=C1")

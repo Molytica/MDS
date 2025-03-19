@@ -96,7 +96,7 @@ void renderScene() {
     float aspectRatio = (float)glutGet(GLUT_WINDOW_WIDTH) / (float)glutGet(GLUT_WINDOW_HEIGHT);
     float fovRadians = fov * (M_PI / 180.0f); // Convert FoV from degrees to radians
 
-
+    glPointSize(5.0f);
     glBegin(GL_POINTS);
     for (auto& p : points) {
         // Calculate distance from the camera to the point
@@ -107,7 +107,7 @@ void renderScene() {
         float pointSize = 5.0f / (distance * tan(fovRadians / 2) * aspectRatio);
         pointSize = std::max(0.125f, std::min(pointSize, 2048.0f)); // Clamping to the valid OpenGL range
         
-        glPointSize(pointSize);
+        glPointSize(5.0f);
         
         glVertex3f(p.x, p.y, p.z);
     }

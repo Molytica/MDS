@@ -73,8 +73,12 @@ def get_max_min_edge_list(edge_list):
         min_ = min(min_, edge[0], edge[1])
     return max_, min_
 
-def get_protein_data(uniprot_id):
-    pdbgz_file = os.path.join("AFDATA", f"AF-{uniprot_id}-F1-model_v4.pdb.gz")
+def get_protein_data(uniprot_id, path=None):
+    if path == None:
+        pdbgz_file = os.path.join("AFDATA", f"AF-{uniprot_id}-F1-model_v4.pdb.gz")
+    else:
+        pdbgz_file = path + f"AF-{uniprot_id}-F1-model_v4.pdb.gz"
+
     atom_coords = []
     atom_types = []
 
@@ -139,7 +143,7 @@ def get_protein_data(uniprot_id):
 
     # Remove last oxygen
     #print(amino_acid_atom_index_dict[list(amino_acid_atom_index_dict.keys())[-1]][-1])
-    amino_acid_atom_index_dict[list(amino_acid_atom_index_dict.keys())[-1]].pop(-1)
+    #amino_acid_atom_index_dict[list(amino_acid_atom_index_dict.keys())[-1]].pop(-1)
     #print(amino_acid_atom_index_dict[list(amino_acid_atom_index_dict.keys())[-1]][-1])
 
 
@@ -157,6 +161,12 @@ def get_protein_data(uniprot_id):
 
     # Add the last oxygen
     protein_edge_list.append((amino_acid_atom_index_dict[list(amino_acid_atom_index_dict.keys())[-1]][2], len(atom_types) - 1, 1.5))
+
+    for atom_idx in range(len(atom_types)):
+        print(f"Atom {atom_idx}: Type={atom_types[atom_idx]}, Amino Acid={amino_acid_type_atom_list[atom_idx]}")
+
+
+    exit() # TODO: Add hydrogen to the amino acids
 
     return {
         "atom_coords": atom_coords,
@@ -404,7 +414,7 @@ def plot_structure_electronegativity(atom_coords, atom_symbols, edge_list, amino
     x, y, z = zip(*atom_coords)  # Unpack the coordinates
     text_labels = [f'{symbol} {i} ({aa})' for i, (symbol, aa) in enumerate(zip(atom_symbols, amino_acid_type_belongings))]  # Include amino acid type in label
 
-    # Electronegativity values for different atoms
+    # Electronegativity values for different atoms (not directly used for colors anymore)
     electronegativities = {
         "C": 2.55,
         "N": 3.04,
@@ -413,19 +423,19 @@ def plot_structure_electronegativity(atom_coords, atom_symbols, edge_list, amino
         "P": 2.19,
     }
 
-    # Define a color scale based on electronegativity values
-    # Assume the minimum and maximum electronegativity values are known (from your dictionary)
-    min_electroneg = min(electronegativities.values())
-    max_electroneg = max(electronegativities.values())
+    # Define a function to map atom symbols to colors
+    def get_color(symbol):
+        color_map = {
+            "C": 'rgb(128, 128, 128)',  # Gray
+            "N": 'rgb(255, 0, 0)',      # Red
+            "O": 'rgb(0, 0, 255)',      # Blue
+            "S": 'rgb(255, 165, 0)',    # Orange
+            "P": 'rgb(255, 255, 0)'     # Yellow for phosphorus
+        }
+        return color_map.get(symbol, 'rgb(255, 255, 255)')  # Default white if not specified
 
-    # Create a function to interpolate between colors based on electronegativity
-    def get_color(electroneg):
-        # Normalize the electronegativity value between 0 and 1
-        normalized = (electroneg - min_electroneg) / (max_electroneg - min_electroneg)
-        return f'rgb({255 * (1 - normalized)}, {255 * normalized}, 150)'  # Example RGB color
-
-    # Map atom symbols to colors based on their electronegativity
-    colors = [get_color(electronegativities.get(symbol, min_electroneg)) for symbol in atom_symbols]
+    # Map atom symbols to colors
+    colors = [get_color(symbol) for symbol in atom_symbols]
 
     # Create scatter plot for atoms
     atom_trace = go.Scatter3d(
@@ -440,14 +450,13 @@ def plot_structure_electronegativity(atom_coords, atom_symbols, edge_list, amino
     bond_traces = []
     for start, end, bond_type in edge_list:
         # Assign colors based on bond type
-        if bond_type == 1:
-            color = 'green'  # Single bond
-        elif bond_type == 1.5:
-            color = 'red'  # Aromatic bond
-        elif bond_type == 2:
-            color = 'blue'  # Double bond
-        else:
-            color = 'grey'  # Default for any other unspecified bond type
+        bond_color_map = {
+            1: 'green',    # Single bond
+            1.5: 'red',    # Aromatic bond
+            2: 'blue',     # Double bond
+            3: 'black'     # Triple bond (added for completeness)
+        }
+        color = bond_color_map.get(bond_type, 'grey')  # Default grey for other unspecified bond types
 
         bond_trace = go.Scatter3d(
             x=[atom_coords[start][0], atom_coords[end][0]],
@@ -535,7 +544,7 @@ if __name__ == "__main__":
     uniprots = sorted(list(af_uniprots))
 
     for uniprot_id in tqdm(uniprots):
-        uniprot_id = "P02768"
+        uniprot_id = "Q15109"
         protein_data = get_protein_data(uniprot_id)
 
         atom_coords = protein_data["atom_coords"]

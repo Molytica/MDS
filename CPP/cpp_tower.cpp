@@ -5,6 +5,7 @@
 #include <string>
 #include "external_tools/json.hpp"  // Make sure this path is correct based on your setup
 #include "MDS1/MDS1.cpp"
+#include "VIZ/VIZ.cpp"
 
 using json = nlohmann::json;
 
@@ -12,10 +13,9 @@ using json = nlohmann::json;
 json processAndRespond(const std::string& jsonData) {
     
     // Process the json data input and create the json response
-    json response = MDS1::process(jsonData);
+    VIZ::visualize(jsonData);
     
-    // Return the response JSON object
-    return response;
+    return MDS1::process(jsonData);
 }
 
 
